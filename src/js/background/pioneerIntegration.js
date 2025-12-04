@@ -28,7 +28,7 @@ function connect() {
   ws.onclose = () => {
     console.log("Disconnected from Pioneer. Reconnecting...");
     setTimeout(connect, reconnectInterval);
-    reconnectInterval = Math.min(reconnectInterval * 2, 30000);
+    reconnectInterval = Math.min(reconnectInterval * 1.5, 10000);
   };
 
   ws.onerror = (error) => {
