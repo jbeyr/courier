@@ -1,4 +1,4 @@
-const PIONEER_WS_URL = "ws://127.0.0.1:45000/ws";
+const PIONEER_WS_URL = "ws://127.0.0.1:45000/ws?client=courier";
 const PIONEER_HEADER_NAME = "Pioneer-Correlation-Id";
 let ws = null;
 let reconnectInterval = 1000;
