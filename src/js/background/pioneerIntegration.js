@@ -4,6 +4,7 @@ let ws = null;
 let reconnectInterval = 1000;
 let globalCorrelationIdCounter = 0;
 let isCounterInitialized = false;
+const pendingEvents = new Map();
 
 // Initialize counter from storage
 browser.storage.local.get("pioneerCorrelationId").then(res => {
@@ -104,17 +105,25 @@ async function handleRequest(details) {
     }
   }
 
-    const payload = {
-      source: "courier",
-      type: "context_event",
-      data: {
-        correlation_id: parseInt(correlationId, 10),
-        role: role,
-        container: containerName
-      }
-    };  if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify(payload));
-  }
+  const payload = {
+    source: "courier",
+    type: "context_event",
+    data: {
+      correlation_id: parseInt(correlationId, 10),
+      role: role,
+      container: containerName
+    }
+  };
+
+  // dumb hack to prevent sending to allow onErrorOccurred to cancel if proxy is down
+  const timeoutId = setTimeout(() => {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify(payload));
+    }
+    pendingEvents.delete(details.requestId);
+  }, 50);
+
+  pendingEvents.set(details.requestId, timeoutId);
 
   return { requestHeaders: headers };
 }
@@ -124,3 +133,11 @@ browser.webRequest.onBeforeSendHeaders.addListener(
   { urls: ["<all_urls>"] },
   ["blocking", "requestHeaders"]
 );
+
+browser.webRequest.onErrorOccurred.addListener((details) => {
+  if (pendingEvents.has(details.requestId)) {
+    clearTimeout(pendingEvents.get(details.requestId));
+    pendingEvents.delete(details.requestId);
+    console.log(`Aborted context event for ${details.requestId} due to error: ${details.error}`);
+  }
+}, { urls: ["<all_urls>"] });
