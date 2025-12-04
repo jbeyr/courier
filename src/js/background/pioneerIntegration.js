@@ -50,6 +50,11 @@ async function handleRequest(details) {
     });
   }
 
+  // Ignore requests from the default container (no container) or private browsing
+  if (!details.cookieStoreId || details.cookieStoreId === "firefox-default" || details.cookieStoreId === "firefox-private") {
+    return;
+  }
+
   const headers = details.requestHeaders;
   if (!headers) return;
 
