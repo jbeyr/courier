@@ -155,6 +155,13 @@ const backgroundLogic = {
     // Now remove the identity->proxy association in proxifiedContainers also
     proxifiedContainers.delete(this.cookieStoreId(userContextId));
 
+    // Remove the role association
+    const rolesStorage = await browser.storage.local.get("containerRoles");
+    if (rolesStorage.containerRoles && rolesStorage.containerRoles[this.cookieStoreId(userContextId)]) {
+      delete rolesStorage.containerRoles[this.cookieStoreId(userContextId)];
+      await browser.storage.local.set({ containerRoles: rolesStorage.containerRoles });
+    }
+
     return {done: true, userContextId};
   },
 

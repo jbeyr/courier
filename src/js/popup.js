@@ -1848,7 +1848,7 @@ Logic.registerPanel(P_CONTAINER_EDIT, {
     const formValues = new FormData(this._editForm);
 
     try {
-      await browser.runtime.sendMessage({
+      const identity = await browser.runtime.sendMessage({
         method: "createOrUpdateContainer",
         message: {
           userContextId: formValues.get("container-id") || NEW_CONTAINER_ID,
@@ -1859,6 +1859,17 @@ Logic.registerPanel(P_CONTAINER_EDIT, {
           },
         }
       });
+
+      const role = document.getElementById("edit-container-panel-role-input").value;
+      const rolesStorage = await browser.storage.local.get("containerRoles");
+      const roles = rolesStorage.containerRoles || {};
+      if (role) {
+        roles[identity.cookieStoreId] = role;
+      } else {
+        delete roles[identity.cookieStoreId];
+      }
+      await browser.storage.local.set({ containerRoles: roles });
+
       await Logic.refreshIdentities();
       Logic.showPreviousPanel();
     } catch {
@@ -1936,6 +1947,15 @@ Logic.registerPanel(P_CONTAINER_EDIT, {
     });
 
     document.querySelector("#edit-container-panel-name-input").value = identity.name || "";
+    
+    const rolesStorage = await browser.storage.local.get("containerRoles");
+    const roles = rolesStorage.containerRoles || {};
+    let currentRole = roles[identity.cookieStoreId];
+    if (currentRole === undefined && !identity.cookieStoreId) {
+      currentRole = "unauthenticated";
+    }
+    document.querySelector("#edit-container-panel-role-input").value = currentRole || "";
+
     document.querySelector("#edit-container-panel-usercontext-input").value = userContextId || NEW_CONTAINER_ID;
     const containerName = document.querySelector("#edit-container-panel-name-input");
     window.requestAnimationFrame(() => {

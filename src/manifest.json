@@ -22,7 +22,8 @@
     "unlimitedStorage",
     "tabs",
     "webRequestBlocking",
-    "webRequest"
+    "webRequest",
+    "notifications"
   ],
   "optional_permissions": [
     "bookmarks",
